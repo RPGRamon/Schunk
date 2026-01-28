@@ -39,5 +39,9 @@ cfdi_recibidos = leer_parquet(folder, "RECIBIDOS", exact_match=False)
 layout_depos = unir_dataframes(cobrado, clientes, "Merge_Key_Aux", "Merge_Key", tipo_union="left")
 layout_depos = unir_dataframes(layout_depos, bancos, "Merge_Key_Bank", "Merge_Key", tipo_union="left")
 
+layout_retiros = unir_dataframes(acreditable, proveedores, "Merge_Key_Aux", "Merge_Key", tipo_union="left")
+layout_retiros = unir_dataframes(layout_retiros, bancos, "Merge_Key_Bank", "Merge_Key", tipo_union="left")
+
 guardar_dataframe(layout_depos, path, "mix", "Layout_Depósitos", formato='csv')
+guardar_dataframe(layout_retiros, path, "mix", "Layout_Retiros", formato='csv')
 Guardar_Formato(layout_depos, path, "mix", "Layout_Depósitos")
