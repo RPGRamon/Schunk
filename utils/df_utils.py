@@ -629,4 +629,59 @@ def Guardar_Formato(df, carpeta_base, subcarpeta, nombre_archivo):
         logging.error(f"Error al guardar el archivo: {str(e)}")
         print(f" [Error] al guardar el archivo: {e}")
 
+def multi_excel_to_csv(input_folder, sheet_name=None, backup_folder_name="old_bk"):
+    # """
+    # Convierte una hoja especfica de todos los archivos Excel en una carpeta a CSV
+    # y mueve los originales a una carpeta de respaldo. Usa la primera hoja si no se proporciona nombre de hoja.
+ 
+    # Args:
+    # - input_folder (str): Ruta de la carpeta que contiene los archivos Excel.
+    # - sheet_name (list, optional): Lista de las hojas que se tienen que convertir. Si no se proporciona, se usa la primera hoja.
+    # - backup_folder_name (str): Nombre de la carpeta de respaldo para mover los archivos originales.
+ 
+    # Returns:
+    # - None
+    # """
+    # Crear carpeta de respaldo si no existe
+   
+    backup_folder_path = os.path.join(input_folder, backup_folder_name)
+    os.makedirs(backup_folder_path, exist_ok=True)
+ 
+    excel_extensions = ('.xlsx', '.xls', '.xlsm', '.xlsb')
+ 
+    for filename in os.listdir(input_folder):
+        if filename.lower().endswith(excel_extensions):
+            file_path = os.path.join(input_folder, filename)
+            base_name = os.path.splitext(filename)[0]
+           
+            try:
+                # pyxlsb es vital para archivos .xlsb en Pandas
+                engine = 'pyxlsb' if filename.lower().endswith('.xlsb') else None
+               
+                # Leemos el Excel. Si sheet_name es None, leemos todas ({nombre: df})
+                # Si es lista o string, lee solo esas.
+                sheets_dict = pd.read_excel(file_path, sheet_name=sheet_name, engine=engine)
+ 
+                # Si solo se pidió una hoja (string), lo convertimos a dict para iterar uniforme
+                if isinstance(sheets_dict, pd.DataFrame):
+                    # Si no hay nombre de hoja (se usó índice 0), usamos 'default' o el nombre original
+                    s_name = sheet_name if sheet_name else "hoja_1"
+                    sheets_dict = {s_name: sheets_dict}
+ 
+                for s_name, df in sheets_dict.items():
+                    # Nombre: ArchivoOriginal_NombreHoja.csv
+                    csv_filename = f"{s_name}.csv"
+                    csv_path = os.path.join(input_folder, csv_filename)
+                   
+                    df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+                    print(f" [OK] Exportada hoja '{s_name}' de {filename}")
+ 
+                # Mover original al terminar de extraer todas sus hojas
+                shutil.move(file_path, os.path.join(backup_folder_path, filename))
+ 
+            except Exception as e:
+                print(f" [ERROR] al procesar {filename}: {e}")
+ 
+    print("Proceso completado.")
+ 
     
